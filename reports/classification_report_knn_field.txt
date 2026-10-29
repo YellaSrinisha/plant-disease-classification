@@ -1,0 +1,18 @@
+Classification Report — knn_field
+============================================================
+                     precision    recall  f1-score   support
+
+Corn_Gray_Leaf_Spot       0.25      0.40      0.31         5
+Potato_Early_Blight       0.40      0.16      0.23        25
+Tomato_Early_Blight       0.20      0.36      0.26        11
+     Tomato_Healthy       0.36      0.67      0.47         6
+ Tomato_Late_Blight       0.27      0.25      0.26        24
+
+           accuracy                           0.28        71
+          macro avg       0.30      0.37      0.31        71
+       weighted avg       0.31      0.28      0.27        71
+
+Accuracy  : 0.2817
+Precision : 0.2973  (macro)
+Recall    : 0.3681  (macro)
+F1-score  : 0.3052  (macro)

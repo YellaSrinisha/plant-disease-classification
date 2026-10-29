@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description"
+        content="AI-powered plant disease detection. Upload a leaf photo and get instant diagnosis using classical machine learning.">
+  <title>Plant Disease Detector</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <!-- ── Header ─────────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <span class="logo">🌿</span>
+    <h1>Plant Disease Detector</h1>
+    <p>Upload a leaf photo · Get instant diagnosis</p>
+  </header>
+
+  <!-- ── Nav ────────────────────────────────────────────────────────── -->
+  <nav class="nav-bar">
+    <a href="/" class="active">Detect</a>
+    <a href="/results">Results</a>
+    <a href="/about">About</a>
+  </nav>
+
+  <!-- ── Upload Card ────────────────────────────────────────────────── -->
+  <div class="card">
+    <p class="card-title">📷 Upload Leaf Image</p>
+
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".jpg,.jpeg,.png"
+             aria-label="Upload leaf image">
+      <span class="upload-icon">📤</span>
+      <h3>Drag &amp; drop or click to upload</h3>
+      <p>Take a close-up photo of a single leaf</p>
+      <span class="formats">JPG · JPEG · PNG · Max 16 MB</span>
+    </div>
+
+    <!-- Preview -->
+    <div id="preview-section">
+      <img id="image-preview" src="" alt="Uploaded leaf preview">
+      <p class="file-info" id="file-info"></p>
+      <button class="change-btn" id="change-btn">↺ Choose different image</button>
+    </div>
+
+    <!-- Predict button -->
+    <button class="btn-predict" id="predict-btn" disabled>
+      🔍 Detect Disease
+    </button>
+  </div>
+
+  <!-- ── Loading ────────────────────────────────────────────────────── -->
+  <div class="card" id="loading-section">
+    <div class="spinner"></div>
+    <p class="loading-text">Analysing leaf image…</p>
+    <p class="loading-text" style="font-size:.8rem;margin-top:4px;opacity:.7">
+      Preprocessing · Extracting features · Running ensemble
+    </p>
+  </div>
+
+  <!-- ── Result Card ────────────────────────────────────────────────── -->
+  <div class="card" id="result-section">
+    <p class="card-title">🎯 Detection Result</p>
+
+    <div class="result-header">
+      <span class="result-emoji" id="result-emoji">🌿</span>
+      <div>
+        <div class="result-title" id="result-disease">—</div>
+        <div class="result-subtitle">Ensemble prediction (KNN + SVM + Random Forest)</div>
+      </div>
+    </div>
+
+    <!-- Confidence bar -->
+    <div class="confidence-block">
+      <div class="confidence-label">
+        <span>Model confidence</span>
+        <span class="confidence-pct" id="confidence-pct">0%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill" id="bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Severity -->
+    <div class="info-row">
+      <span class="info-icon">⚠️</span>
+      <div class="info-text">
+        <strong>Severity</strong>
+        <span id="severity-badge" class="severity-badge severity-unknown">—</span>
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="info-row">
+      <span class="info-icon">📋</span>
+      <div class="info-text">
+        <strong>About this disease</strong>
+        <span id="result-description">—</span>
+      </div>
+    </div>
+
+    <!-- Recommended action -->
+    <div class="info-row">
+      <span class="info-icon">💊</span>
+      <div class="info-text">
+        <strong>Recommended action</strong>
+        <span id="result-action">—</span>
+      </div>
+    </div>
+
+    <!-- All probabilities -->
+    <button class="probs-toggle" id="probs-toggle">
+      ▶ Show all probabilities
+    </button>
+    <div class="probs-table" id="probs-table"></div>
+  </div>
+
+  <!-- ── Error Card ──────────────────────────────────────────────────── -->
+  <div id="error-section">
+    <div class="error-card">
+      <span class="error-icon">❌</span>
+      <div>
+        <div class="error-title">Prediction Failed</div>
+        <div class="error-msg" id="error-msg">An unknown error occurred.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Supported Diseases ──────────────────────────────────────────── -->
+  <div class="card">
+    <p class="card-title">🦠 Supported Diseases</p>
+    <div class="disease-grid">
+      <div class="disease-pill"><span class="pill-emoji">🍅</span> Tomato Early Blight</div>
+      <div class="disease-pill"><span class="pill-emoji">🍅</span> Tomato Late Blight</div>
+      <div class="disease-pill"><span class="pill-emoji">✅</span> Tomato Healthy</div>
+      <div class="disease-pill"><span class="pill-emoji">🌽</span> Corn Gray Leaf Spot</div>
+      <div class="disease-pill"><span class="pill-emoji">🥔</span> Potato Early Blight</div>
+    </div>
+  </div>
+
+  <!-- ── Tips ────────────────────────────────────────────────────────── -->
+  <div class="card">
+    <p class="card-title">📸 How to get best results</p>
+    <ul class="tips-list">
+      <li><span class="tip-icon">🍃</span>
+          Photograph a single leaf — not the whole plant</li>
+      <li><span class="tip-icon">🔍</span>
+          Fill the frame with the leaf — close-up shots work best</li>
+      <li><span class="tip-icon">☀️</span>
+          Use natural daylight — avoid flash or harsh shadows</li>
+      <li><span class="tip-icon">🏞️</span>
+          Plain or blurred background gives cleaner results</li>
+      <li><span class="tip-icon">📐</span>
+          Hold the camera flat, directly above the leaf</li>
+    </ul>
+  </div>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────── -->
+  <footer class="app-footer">
+    <p>Classical ML · KNN · SVM · Random Forest · Weighted Ensemble</p>
+    <p style="margin-top:4px">
+      Trained on PlantVillage + PlantDoc &nbsp;·&nbsp;
+      <a href="/about">About this project</a>
+    </p>
+  </footer>
+
+</div><!-- end page-wrapper -->
+
+<script src="/static/js/main.js"></script>
+</body>
+</html>

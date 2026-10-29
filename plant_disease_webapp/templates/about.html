@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About — Plant Disease Detector</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <header class="app-header">
+    <span class="logo">🌿</span>
+    <h1>Plant Disease Detector</h1>
+    <p>About this project</p>
+  </header>
+
+  <nav class="nav-bar">
+    <a href="/">Detect</a>
+    <a href="/results">Results</a>
+    <a href="/about" class="active">About</a>
+  </nav>
+
+  <div class="card">
+
+    <!-- Project overview -->
+    <div class="about-section">
+      <h2>🔬 Project Overview</h2>
+      <p>
+        This web application uses a <strong>classical machine learning ensemble</strong>
+        to detect plant diseases from leaf photographs. It was built as part of an
+        academic project to demonstrate that lightweight, interpretable models can
+        achieve high accuracy without deep learning.
+      </p>
+      <p>
+        The system targets the <em>lab-to-field performance gap</em> — the drop in
+        accuracy when models trained on clean lab images encounter real farm photos.
+        Mixed-dataset training, field-aware preprocessing, and ensemble voting help
+        bridge this gap.
+      </p>
+    </div>
+
+    <!-- Methodology -->
+    <div class="about-section">
+      <h2>⚙️ Methodology (v2 — field-robust)</h2>
+      <ul>
+        <li>
+          <strong>Preprocessing:</strong>
+          Resize (224×224) →
+          Gray-World colour constancy + per-channel percentile stretch →
+          CLAHE illumination normalisation (L* channel, clip=2.5) →
+          3-strategy leaf segmentation cascade
+          (ExG+HSV Saturation → HSV green-range → centre-bias Gaussian;
+          falls back to full image if all strategies fail, preventing corrupt frames)
+        </li>
+        <li>
+          <strong>Training augmentation:</strong>
+          5 augmented copies per training image — random combinations of
+          rotation, crop/zoom, perspective warp, flips, brightness/contrast,
+          shadow strips, hue/saturation shifts, JPEG compression, motion blur,
+          and Gaussian noise. Augmentation is applied to the training split only.
+        </li>
+        <li>
+          <strong>PlantDoc upweighting:</strong>
+          Each PlantDoc (field) training sample is given 3× the weight of a
+          PlantVillage sample during SVM and RF training, directly addressing
+          the lab-to-field class imbalance.
+        </li>
+        <li>
+          <strong>Features:</strong> 66-dimensional vector —
+          20 colour (RGB/HSV channel stats + vegetation indices: G/R, G/B, NDI, ExG),
+          30 texture (GLCM contrast/correlation/energy/homogeneity over 4 angles
+          + 26-bin LBP histogram on foreground pixels),
+          16 shape (normalised area &amp; perimeter, compactness, eccentricity,
+          aspect ratio, solidity, 7 log-scaled Hu moments,
+          lesion count / density / area ratio)
+        </li>
+        <li>
+          <strong>Classifiers:</strong>
+          KNN (distance-weighted, grid search over n_neighbors and metric),
+          SVM (RBF kernel, CalibratedClassifierCV for probabilities,
+          balanced class weights, grid search over C and gamma),
+          Random Forest (balanced class weights, grid search over n_estimators,
+          max_depth, min_samples_leaf, max_features).
+          All use 5-fold stratified GridSearchCV scored by macro F1.
+        </li>
+        <li>
+          <strong>Ensemble:</strong> Weighted soft voting — each model's
+          weight equals its validation accuracy; probability columns are
+          aligned across models so differing class subsets are handled safely.
+        </li>
+      </ul>
+    </div>
+
+    <!-- Datasets -->
+    <div class="about-section">
+      <h2>📁 Datasets</h2>
+      <p>
+        Models were trained on a subset of two public datasets.
+        The counts below reflect images <em>actually included</em> in this project.
+      </p>
+      <ul>
+        <li><strong>PlantVillage</strong> — 5,000 lab-quality images (1,000 per class)</li>
+        <li><strong>PlantDoc</strong> — 447 real field images (68–117 per class)</li>
+        <li><strong>Total:</strong> 5,447 images across 5 classes</li>
+      </ul>
+      <p style="font-size:.82rem;color:#9ca3af;margin-top:6px">
+        Original PlantVillage: ~54,306 images (38 classes).
+        Original PlantDoc: ~2,598 images (27 classes).
+        This project uses a 5-class subset.
+      </p>
+    </div>
+
+    <!-- Performance -->
+    <div class="about-section">
+      <h2>📊 Model Performance</h2>
+      <p>
+        See the <a href="/results" style="color:var(--purple-mid);font-weight:600;">Results page</a>
+        for actual metrics read directly from
+        <code>reports/metrics_summary.csv</code> — nothing is hard-coded here.
+      </p>
+      <p style="font-size:.82rem;color:#9ca3af;margin-top:6px">
+        Metrics include accuracy, macro precision/recall/F1 on the full test set
+        and the PlantDoc field subset separately, plus confusion matrices and
+        per-class F1 charts for every model.
+      </p>
+    </div>
+
+    <!-- Supported classes -->
+    <div class="about-section">
+      <h2>🦠 Supported Classes</h2>
+      <div class="disease-grid">
+        <div class="disease-pill"><span class="pill-emoji">🍅</span> Tomato Early Blight</div>
+        <div class="disease-pill"><span class="pill-emoji">🍅</span> Tomato Late Blight</div>
+        <div class="disease-pill"><span class="pill-emoji">✅</span> Tomato Healthy</div>
+        <div class="disease-pill"><span class="pill-emoji">🌽</span> Corn Gray Leaf Spot</div>
+        <div class="disease-pill"><span class="pill-emoji">🥔</span> Potato Early Blight</div>
+      </div>
+    </div>
+
+    <!-- Limitations -->
+    <div class="about-section">
+      <h2>⚠️ Limitations</h2>
+      <ul>
+        <li>Designed for <strong>single-leaf close-up photos</strong> — not whole plant or fruit images</li>
+        <li>Only classifies the 5 trained disease classes</li>
+        <li>Classical features may not capture fine-grained patterns that deep CNN features learn</li>
+        <li>Field (PlantDoc) accuracy is lower than lab accuracy due to distribution shift</li>
+        <li>Gray-World colour constancy can fail on images with a dominant single colour</li>
+      </ul>
+    </div>
+
+    <!-- Tech stack -->
+    <div class="about-section">
+      <h2>🛠️ Technology Stack</h2>
+      <ul>
+        <li><strong>Backend:</strong> Flask (Python)</li>
+        <li><strong>ML:</strong> scikit-learn, OpenCV, scikit-image</li>
+        <li><strong>Frontend:</strong> Vanilla HTML, CSS, JavaScript</li>
+        <li><strong>No deep learning</strong> — purely classical ML</li>
+      </ul>
+    </div>
+
+    <!-- API -->
+    <div class="about-section">
+      <h2>🔌 API Endpoint</h2>
+      <p>
+        <code>POST /predict</code> — multipart/form-data with field <code>file</code>
+      </p>
+      <p>Returns JSON:</p>
+      <pre style="background:#f3f4f6;padding:10px;border-radius:8px;font-size:.78rem;overflow-x:auto;">{
+  "success"    : true,
+  "disease"    : "Tomato_Early_Blight",
+  "display"    : "Tomato Early Blight",
+  "confidence" : 87.3,
+  "severity"   : "Moderate",
+  "description": "Caused by Alternaria solani...",
+  "action"     : "Remove infected leaves...",
+  "emoji"      : "🍅",
+  "all_probs"  : { "Tomato Early Blight": 87.3, ... }
+}</pre>
+    </div>
+
+  </div><!-- end card -->
+
+  <footer class="app-footer">
+    <p>Plant Disease Detection · Classical ML Project</p>
+    <p style="margin-top:4px">
+      <a href="/">← Back to detection</a>
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>

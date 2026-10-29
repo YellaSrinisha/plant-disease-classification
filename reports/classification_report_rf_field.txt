@@ -1,0 +1,18 @@
+Classification Report — rf_field
+============================================================
+                     precision    recall  f1-score   support
+
+Corn_Gray_Leaf_Spot       0.27      0.80      0.40         5
+Potato_Early_Blight       0.42      0.32      0.36        25
+Tomato_Early_Blight       0.21      0.27      0.24        11
+     Tomato_Healthy       0.40      0.67      0.50         6
+ Tomato_Late_Blight       0.54      0.29      0.38        24
+
+           accuracy                           0.37        71
+          macro avg       0.37      0.47      0.38        71
+       weighted avg       0.42      0.37      0.36        71
+
+Accuracy  : 0.3662
+Precision : 0.3681  (macro)
+Recall    : 0.4702  (macro)
+F1-score  : 0.3764  (macro)

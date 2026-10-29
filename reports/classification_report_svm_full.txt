@@ -1,0 +1,18 @@
+Classification Report — svm_full
+============================================================
+                     precision    recall  f1-score   support
+
+Corn_Gray_Leaf_Spot       0.95      0.98      0.96       160
+Potato_Early_Blight       0.90      0.92      0.91       168
+Tomato_Early_Blight       0.83      0.89      0.86       164
+     Tomato_Healthy       0.90      0.97      0.93       159
+ Tomato_Late_Blight       0.89      0.70      0.79       167
+
+           accuracy                           0.89       818
+          macro avg       0.89      0.89      0.89       818
+       weighted avg       0.89      0.89      0.89       818
+
+Accuracy  : 0.8912
+Precision : 0.8920  (macro)
+Recall    : 0.8927  (macro)
+F1-score  : 0.8894  (macro)

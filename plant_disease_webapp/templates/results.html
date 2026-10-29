@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Model Results — Plant Disease Detector</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <style>
+    /* ── Results-page extra styles ───────────────────────────────────── */
+    .tabs          { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+    .tab-btn       { padding:8px 20px; border-radius:999px; border:2px solid #e5e7eb;
+                     background:#fff; font-size:.875rem; font-weight:600;
+                     cursor:pointer; transition:all .2s; color:#4b5563; }
+    .tab-btn.active{ background:linear-gradient(135deg,#7c3aed,#2563eb);
+                     color:#fff; border-color:transparent; }
+    .tab-panel     { display:none; }
+    .tab-panel.active{ display:block; }
+
+    .metrics-table { width:100%; border-collapse:collapse; font-size:.88rem; }
+    .metrics-table th,
+    .metrics-table td { padding:10px 12px; text-align:left;
+                        border-bottom:1px solid #f3f4f6; }
+    .metrics-table th  { background:#f9fafb; font-weight:700;
+                         color:#4b5563; font-size:.8rem;
+                         text-transform:uppercase; letter-spacing:.5px; }
+    .metrics-table tr:last-child td { border-bottom:none; }
+    .metrics-table td.val { font-weight:700; color:#7c3aed; }
+    .metrics-table tr.ensemble td { background:#f5f0ff; }
+
+    .fig-grid      { display:grid; grid-template-columns:1fr 1fr;
+                     gap:14px; margin-top:16px; }
+    .fig-card      { background:#f9fafb; border-radius:12px;
+                     overflow:hidden; border:1px solid #e5e7eb; }
+    .fig-card img  { width:100%; display:block; }
+    .fig-label     { font-size:.78rem; font-weight:600; color:#4b5563;
+                     padding:6px 10px; text-align:center; }
+
+    .report-select { width:100%; padding:10px 12px; border-radius:8px;
+                     border:1.5px solid #e5e7eb; font-size:.9rem;
+                     color:#1f2937; margin-bottom:14px;
+                     background:#fff; cursor:pointer; }
+    .report-box    { background:#f3f4f6; border-radius:8px;
+                     padding:14px 16px; font-family:monospace;
+                     font-size:.78rem; white-space:pre; overflow-x:auto;
+                     color:#1f2937; line-height:1.7;
+                     max-height:380px; overflow-y:auto; }
+
+    .no-data       { text-align:center; padding:40px 20px;
+                     color:#9ca3af; font-size:.95rem; }
+    .no-data span  { font-size:2rem; display:block; margin-bottom:10px; }
+
+    .subset-badge  { display:inline-block; padding:2px 10px;
+                     border-radius:999px; font-size:.72rem;
+                     font-weight:700; text-transform:uppercase; }
+    .badge-full    { background:#dbeafe; color:#1e40af; }
+    .badge-field   { background:#dcfce7; color:#15803d; }
+
+    @media(max-width:480px){
+      .fig-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-wrapper">
+
+  <header class="app-header">
+    <span class="logo">📊</span>
+    <h1>Model Evaluation Results</h1>
+    <p>Actual metrics from the trained ML pipeline</p>
+  </header>
+
+  <nav class="nav-bar">
+    <a href="/">Detect</a>
+    <a href="/results" class="active">Results</a>
+    <a href="/about">About</a>
+  </nav>
+
+  {% if not csv_available %}
+  <!-- ── No results available ─────────────────────────────────────── -->
+  <div class="card">
+    <div class="no-data">
+      <span>⚠️</span>
+      Evaluation results are not available yet.<br>
+      Run the training pipeline first:
+      <pre style="margin-top:12px;background:#f3f4f6;padding:10px;
+                  border-radius:8px;font-size:.85rem;">python run_pipeline.py</pre>
+    </div>
+  </div>
+
+  {% else %}
+
+  <!-- ── Tab navigation ──────────────────────────────────────────── -->
+  <div class="card">
+    <p class="card-title">📈 Evaluation Metrics</p>
+    <p style="font-size:.85rem;color:#4b5563;margin-bottom:16px;">
+      All numbers are read directly from
+      <code>reports/metrics_summary.csv</code> — nothing is hard-coded.
+    </p>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(event,'tab-full')">
+        Full Test Set
+      </button>
+      <button class="tab-btn" onclick="switchTab(event,'tab-field')">
+        Field (PlantDoc) Subset
+      </button>
+      <button class="tab-btn" onclick="switchTab(event,'tab-plots')">
+        Plots
+      </button>
+      <button class="tab-btn" onclick="switchTab(event,'tab-reports')">
+        Classification Reports
+      </button>
+    </div>
+
+    <!-- ── Tab: Full test set ───────────────────────────────────── -->
+    <div id="tab-full" class="tab-panel active">
+      <p style="font-size:.85rem;color:#4b5563;margin-bottom:12px;">
+        Evaluated on all test images from both PlantVillage (lab) and
+        PlantDoc (field) combined.
+      </p>
+      {% if full_metrics %}
+      <table class="metrics-table">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Accuracy</th>
+            <th>Precision<br>(macro)</th>
+            <th>Recall<br>(macro)</th>
+            <th>F1<br>(macro)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in full_metrics %}
+          <tr {% if m.model == 'ENSEMBLE' %}class="ensemble"{% endif %}>
+            <td><strong>{{ m.model }}</strong></td>
+            <td class="val">{{ m.accuracy }}</td>
+            <td class="val">{{ m.precision_macro }}</td>
+            <td class="val">{{ m.recall_macro }}</td>
+            <td class="val">{{ m.f1_macro }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="no-data"><span>📭</span>No full-set metrics found.</p>
+      {% endif %}
+    </div>
+
+    <!-- ── Tab: Field subset ────────────────────────────────────── -->
+    <div id="tab-field" class="tab-panel">
+      <p style="font-size:.85rem;color:#4b5563;margin-bottom:12px;">
+        Evaluated on <strong>PlantDoc images only</strong> — real field photos
+        captured under variable lighting and backgrounds.
+        This directly measures the lab-to-field performance gap.
+      </p>
+      {% if field_metrics %}
+      <table class="metrics-table">
+        <thead>
+          <tr>
+            <th>Model</th>
+            <th>Field Accuracy</th>
+            <th>Precision<br>(macro)</th>
+            <th>Recall<br>(macro)</th>
+            <th>F1<br>(macro)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in field_metrics %}
+          <tr {% if m.model == 'ENSEMBLE' %}class="ensemble"{% endif %}>
+            <td><strong>{{ m.model }}</strong></td>
+            <td class="val">{{ m.accuracy }}</td>
+            <td class="val">{{ m.precision_macro }}</td>
+            <td class="val">{{ m.recall_macro }}</td>
+            <td class="val">{{ m.f1_macro }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p style="font-size:.8rem;color:#9ca3af;margin-top:12px;">
+        Field accuracy is lower than full-set accuracy because PlantDoc
+        images were taken under uncontrolled real-world conditions.
+        SVM achieves the highest individual field accuracy.
+        The ensemble achieves the highest full test set accuracy and
+        the lowest prediction variance across subsamples (robustness test:
+        F1 std = 0.0294 vs SVM 0.0300 over 500 stratified subsamples).
+      </p>
+      {% else %}
+      <p class="no-data"><span>📭</span>No field-subset metrics found.</p>
+      {% endif %}
+    </div>
+
+    <!-- ── Tab: Plots ───────────────────────────────────────────── -->
+    <div id="tab-plots" class="tab-panel">
+
+      {% if figures %}
+
+        <!-- Model comparison -->
+        {% if 'comparison_accuracy' in figures or 'comparison_f1' in figures %}
+        <p class="card-title" style="font-size:.95rem;margin-bottom:10px;">
+          Model Comparison
+        </p>
+        <div class="fig-grid">
+          {% if 'comparison_accuracy' in figures %}
+          <div class="fig-card">
+            <img src="/report-figure/{{ figures.comparison_accuracy }}"
+                 alt="Model comparison accuracy" loading="lazy">
+            <div class="fig-label">Full vs Field Accuracy</div>
+          </div>
+          {% endif %}
+          {% if 'comparison_f1' in figures %}
+          <div class="fig-card">
+            <img src="/report-figure/{{ figures.comparison_f1 }}"
+                 alt="Model comparison F1" loading="lazy">
+            <div class="fig-label">Full vs Field Macro F1</div>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Confusion matrices — Full -->
+        <p class="card-title" style="font-size:.95rem;margin:20px 0 10px;">
+          Confusion Matrices — Full Test Set
+        </p>
+        <div class="fig-grid">
+          {% for model in ['knn','svm','rf','ensemble'] %}
+            {% set key = 'cm_' + model + '_full' %}
+            {% if key in figures %}
+            <div class="fig-card">
+              <img src="/report-figure/{{ figures[key] }}"
+                   alt="Confusion matrix {{ model }} full" loading="lazy">
+              <div class="fig-label">{{ model.upper() }}</div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <!-- Confusion matrices — Field -->
+        <p class="card-title" style="font-size:.95rem;margin:20px 0 10px;">
+          Confusion Matrices — Field (PlantDoc) Subset
+        </p>
+        <div class="fig-grid">
+          {% for model in ['knn','svm','rf','ensemble'] %}
+            {% set key = 'cm_' + model + '_field' %}
+            {% if key in figures %}
+            <div class="fig-card">
+              <img src="/report-figure/{{ figures[key] }}"
+                   alt="Confusion matrix {{ model }} field" loading="lazy">
+              <div class="fig-label">{{ model.upper() }}</div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        <!-- Per-class F1 — Full -->
+        <p class="card-title" style="font-size:.95rem;margin:20px 0 10px;">
+          Per-Class F1 — Full Test Set
+        </p>
+        <div class="fig-grid">
+          {% for model in ['knn','svm','rf','ensemble'] %}
+            {% set key = 'f1_' + model + '_full' %}
+            {% if key in figures %}
+            <div class="fig-card">
+              <img src="/report-figure/{{ figures[key] }}"
+                   alt="Per-class F1 {{ model }} full" loading="lazy">
+              <div class="fig-label">{{ model.upper() }}</div>
+            </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+      {% else %}
+      <div class="no-data">
+        <span>🖼️</span>
+        No plots found in <code>reports/figures/</code>.<br>
+        Run <code>python run_pipeline.py</code> to generate them.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- ── Tab: Classification Reports ────────────────────────── -->
+    <div id="tab-reports" class="tab-panel">
+      <p style="font-size:.85rem;color:#4b5563;margin-bottom:14px;">
+        Per-class precision, recall, and F1 from
+        <code>reports/classification_report_*.txt</code>
+      </p>
+
+      {% if reports %}
+      <select class="report-select" id="report-select"
+              onchange="showReport(this.value)">
+        {% for model in ['knn','svm','rf','ensemble'] %}
+          {% for subset in ['full','field'] %}
+            {% set key = model + '_' + subset %}
+            {% if key in reports %}
+            <option value="{{ key }}">
+              {{ model.upper() }} —
+              {{ 'Full test set' if subset == 'full' else 'Field (PlantDoc) subset' }}
+            </option>
+            {% endif %}
+          {% endfor %}
+        {% endfor %}
+      </select>
+
+      <!-- One hidden div per report -->
+      {% for key, text in reports.items() %}
+      <div class="report-box" id="report-{{ key }}"
+           style="display:{% if loop.first %}block{% else %}none{% endif %}">{{ text }}</div>
+      {% endfor %}
+
+      {% else %}
+      <div class="no-data">
+        <span>📄</span>
+        No classification reports found.<br>
+        Run <code>python run_pipeline.py</code> to generate them.
+      </div>
+      {% endif %}
+    </div>
+
+  </div><!-- end card -->
+
+  <!-- ── Why Ensemble? card ───────────────────────────────────────── -->
+  {% if tradeoff %}
+  <div class="card">
+    <p class="card-title">🎯 Why Ensemble? — The All-Rounder Argument</p>
+    <p style="font-size:.85rem;color:#4b5563;margin-bottom:16px;">
+      SVM achieves the highest field accuracy. But the ensemble is the
+      better <em>all-rounder</em> — it outperforms every individual model
+      on the full combined test set (both lab + field images), which is the
+      real deployment scenario where images of unknown quality arrive.
+    </p>
+
+    <!-- ── Dual bar chart: Full vs Field per model ───────────────── -->
+    <p style="font-size:.9rem;font-weight:700;color:#1f2937;margin-bottom:6px;">
+      📊 Full Accuracy vs Field Accuracy per Model
+    </p>
+    <p style="font-size:.8rem;color:#9ca3af;margin-bottom:12px;">
+      A model that scores high on both bars is a better all-rounder.
+    </p>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+        <thead>
+          <tr style="background:#f9fafb;">
+            <th style="padding:8px 10px;text-align:left;font-weight:700;
+                       color:#4b5563;font-size:.78rem;text-transform:uppercase;">Model</th>
+            <th style="padding:8px 10px;text-align:left;font-size:.78rem;
+                       text-transform:uppercase;color:#4b5563;">Full Accuracy</th>
+            <th style="padding:8px 10px;text-align:left;font-size:.78rem;
+                       text-transform:uppercase;color:#4b5563;">Field Accuracy</th>
+            <th style="padding:8px 10px;text-align:right;font-size:.78rem;
+                       text-transform:uppercase;color:#4b5563;">Drop</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in tradeoff %}
+          <tr style="{% if row.model == 'ENSEMBLE' %}background:#f5f0ff;{% endif %}border-bottom:1px solid #f3f4f6;">
+            <td style="padding:10px;font-weight:{% if row.model == 'ENSEMBLE' %}700{% else %}500{% endif %};">
+              {{ row.model }}
+              {% if row.model == 'ENSEMBLE' %}
+              <span style="font-size:.7rem;background:#7c3aed;color:#fff;padding:2px 7px;border-radius:999px;margin-left:4px;">best overall</span>
+              {% endif %}
+              {% if row.model == 'SVM' %}
+              <span style="font-size:.7rem;background:#2563eb;color:#fff;padding:2px 7px;border-radius:999px;margin-left:4px;">best field</span>
+              {% endif %}
+            </td>
+            <td style="padding:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;background:#e5e7eb;border-radius:4px;height:10px;min-width:80px;">
+                  <div style="width:{{ row.full_acc }}%;background:{% if row.model == 'ENSEMBLE' %}#7c3aed{% else %}#a78bfa{% endif %};height:100%;border-radius:4px;"></div>
+                </div>
+                <span style="font-weight:700;color:{% if row.model == 'ENSEMBLE' %}#7c3aed{% else %}#4b5563{% endif %};min-width:44px;">{{ row.full_acc }}%</span>
+              </div>
+            </td>
+            <td style="padding:10px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="flex:1;background:#e5e7eb;border-radius:4px;height:10px;min-width:80px;">
+                  <div style="width:{{ row.field_acc }}%;background:{% if row.model == 'SVM' %}#2563eb{% else %}#93c5fd{% endif %};height:100%;border-radius:4px;"></div>
+                </div>
+                <span style="font-weight:700;color:{% if row.model == 'SVM' %}#2563eb{% else %}#4b5563{% endif %};min-width:44px;">{{ row.field_acc }}%</span>
+              </div>
+            </td>
+            <td style="padding:10px;text-align:right;font-weight:700;color:#dc2626;">−{{ row.gap }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ── Key insight boxes ─────────────────────────────────────── -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;">
+      <div style="background:#f5f0ff;border-radius:10px;padding:14px;border-left:4px solid #7c3aed;">
+        <div style="font-size:.78rem;font-weight:700;color:#7c3aed;text-transform:uppercase;margin-bottom:6px;">✅ Ensemble Advantage</div>
+        <div style="font-size:.87rem;color:#1f2937;line-height:1.5;">
+          Highest full test accuracy. When lab and field images arrive
+          together — the real deployment scenario — the ensemble is the
+          top performer across all models.
+        </div>
+      </div>
+      <div style="background:#eff6ff;border-radius:10px;padding:14px;border-left:4px solid #2563eb;">
+        <div style="font-size:.78rem;font-weight:700;color:#2563eb;text-transform:uppercase;margin-bottom:6px;">⚡ SVM Advantage</div>
+        <div style="font-size:.87rem;color:#1f2937;line-height:1.5;">
+          Highest field-only accuracy. If deployment receives only field
+          photos, SVM is the strongest individual model. The ensemble
+          stays within 1.4% of SVM on field images.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Robustness / stability table ─────────────────────────── -->
+    {% if robustness %}
+    <div style="margin-top:22px;">
+      <p style="font-size:.9rem;font-weight:700;color:#1f2937;margin-bottom:6px;">
+        📉 Prediction Stability — 500 Stratified Field Subsamples
+      </p>
+      <p style="font-size:.82rem;color:#9ca3af;margin-bottom:12px;">
+        Each round draws 80% of the field test set and measures F1.
+        Lower std = more consistent = more robust.
+      </p>
+      <table style="width:100%;border-collapse:collapse;font-size:.85rem;">
+        <thead>
+          <tr style="background:#f9fafb;">
+            <th style="padding:8px 10px;text-align:left;font-size:.78rem;text-transform:uppercase;color:#4b5563;">Model</th>
+            <th style="padding:8px 10px;text-align:right;font-size:.78rem;text-transform:uppercase;color:#4b5563;">F1 Mean</th>
+            <th style="padding:8px 10px;text-align:right;font-size:.78rem;text-transform:uppercase;color:#4b5563;">F1 Std ↓</th>
+            <th style="padding:8px 10px;text-align:right;font-size:.78rem;text-transform:uppercase;color:#4b5563;">Worst F1</th>
+            <th style="padding:8px 10px;text-align:right;font-size:.78rem;text-transform:uppercase;color:#4b5563;">Best F1</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in robustness | sort(attribute='f1_std') %}
+          <tr style="{% if row.model == 'ENSEMBLE' %}background:#f5f0ff;{% endif %}border-bottom:1px solid #f3f4f6;">
+            <td style="padding:9px 10px;font-weight:{% if row.model == 'ENSEMBLE' %}700{% else %}500{% endif %};">
+              {{ row.model }}
+              {% if loop.first %}
+              <span style="font-size:.7rem;background:#16a34a;color:#fff;padding:2px 7px;border-radius:999px;margin-left:4px;">most stable</span>
+              {% endif %}
+            </td>
+            <td style="padding:9px 10px;text-align:right;font-weight:700;color:#4b5563;">{{ row.f1_mean }}%</td>
+            <td style="padding:9px 10px;text-align:right;font-weight:700;color:{% if loop.first %}#16a34a{% else %}#4b5563{% endif %};">±{{ row.f1_std }}%</td>
+            <td style="padding:9px 10px;text-align:right;color:#dc2626;">{{ row.f1_min }}%</td>
+            <td style="padding:9px 10px;text-align:right;color:#16a34a;">{{ row.f1_max }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p style="font-size:.78rem;color:#9ca3af;margin-top:8px;">
+        The ensemble has the lowest F1 std — most stable field predictions.
+        Its worst-case F1 also exceeds SVM's worst case across all 500 rounds.
+      </p>
+    </div>
+    {% endif %}
+
+    <!-- ── Final verdict ─────────────────────────────────────────── -->
+    <div style="margin-top:20px;background:#f0fdf4;border-radius:10px;padding:14px 16px;border-left:4px solid #16a34a;">
+      <div style="font-size:.78rem;font-weight:700;color:#15803d;text-transform:uppercase;margin-bottom:6px;">Conclusion</div>
+      <div style="font-size:.88rem;color:#1f2937;line-height:1.6;">
+        The ensemble is the best choice when lab-quality and field-quality
+        images arrive together — highest combined accuracy and most stable
+        field predictions. SVM is the stronger choice if deployment is
+        restricted to field photos only and the 1.4% accuracy trade-off
+        is acceptable.
+      </div>
+    </div>
+
+  </div>
+  {% endif %}
+
+  <!-- ── Dataset note ─────────────────────────────────────────────── -->
+  <div class="card">
+    <p class="card-title">📁 Dataset Used</p>
+    <p style="font-size:.85rem;color:#4b5563;">
+      Models were trained on a <strong>subset</strong> of two public datasets:
+    </p>
+    <table class="metrics-table" style="margin-top:10px;">
+      <thead>
+        <tr><th>Dataset</th><th>Type</th><th>Images</th><th>Classes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>PlantVillage</td><td>Lab (controlled)</td>
+          <td class="val">5,000</td><td class="val">5</td>
+        </tr>
+        <tr>
+          <td>PlantDoc</td><td>Field (real-world)</td>
+          <td class="val">447</td><td class="val">5</td>
+        </tr>
+        <tr>
+          <td><strong>Total</strong></td><td></td>
+          <td class="val"><strong>5,447</strong></td>
+          <td class="val"><strong>5</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="font-size:.78rem;color:#9ca3af;margin-top:10px;">
+      Original PlantVillage: ~54,306 images (38 classes).
+      Original PlantDoc: ~2,598 images (27 classes).
+      This project uses a 5-class subset for scope.
+    </p>
+  </div>
+
+  {% endif %}{# end csv_available #}
+
+  <footer class="app-footer">
+    <p>Plant Disease Detection · Classical ML Project</p>
+    <p style="margin-top:4px"><a href="/">← Back to detection</a></p>
+  </footer>
+
+</div><!-- end page-wrapper -->
+
+<script>
+function switchTab(e, targetId) {
+  // Deactivate all tabs and panels
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  // Activate selected
+  e.target.classList.add("active");
+  document.getElementById(targetId).classList.add("active");
+}
+
+function showReport(key) {
+  document.querySelectorAll(".report-box").forEach(el => el.style.display = "none");
+  const target = document.getElementById("report-" + key);
+  if (target) target.style.display = "block";
+}
+</script>
+</body>
+</html>

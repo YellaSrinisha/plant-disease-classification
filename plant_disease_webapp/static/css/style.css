@@ -1,0 +1,515 @@
+/* =====================================================================
+   style.css — Plant Disease Detection Web App
+   Mobile-first, responsive, purple/blue gradient theme
+   ===================================================================== */
+
+/* ── Reset & Base ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple-dark  : #4a0e8f;
+  --purple-mid   : #7c3aed;
+  --purple-light : #a78bfa;
+  --blue-dark    : #1e3a8a;
+  --blue-mid     : #2563eb;
+  --blue-light   : #93c5fd;
+  --green        : #16a34a;
+  --green-light  : #dcfce7;
+  --red          : #dc2626;
+  --red-light    : #fee2e2;
+  --orange       : #ea580c;
+  --orange-light : #ffedd5;
+  --white        : #ffffff;
+  --gray-50      : #f9fafb;
+  --gray-100     : #f3f4f6;
+  --gray-200     : #e5e7eb;
+  --gray-400     : #9ca3af;
+  --gray-600     : #4b5563;
+  --gray-800     : #1f2937;
+  --shadow-sm    : 0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
+  --shadow-md    : 0 4px 16px rgba(0,0,0,.15);
+  --shadow-lg    : 0 10px 40px rgba(0,0,0,.20);
+  --radius       : 16px;
+  --radius-sm    : 8px;
+  --transition   : all .25s ease;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+               "Helvetica Neue", Arial, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--gray-800);
+  background: linear-gradient(135deg, var(--purple-dark) 0%,
+                                      var(--blue-dark)   50%,
+                                      var(--purple-mid)  100%);
+  min-height: 100vh;
+}
+
+/* ── Layout ──────────────────────────────────────────────────────────── */
+.page-wrapper {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.app-header {
+  text-align: center;
+  padding: 32px 0 24px;
+  color: var(--white);
+}
+
+.app-header .logo { font-size: 3rem; display: block; margin-bottom: 8px; }
+
+.app-header h1 {
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.3);
+}
+
+.app-header p {
+  margin-top: 8px;
+  font-size: 1rem;
+  opacity: .85;
+}
+
+/* ── Card ────────────────────────────────────────────────────────────── */
+.card {
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 28px 24px;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Upload Zone ─────────────────────────────────────────────────────── */
+.upload-zone {
+  border: 2.5px dashed var(--purple-light);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  background: var(--gray-50);
+  position: relative;
+}
+
+.upload-zone:hover,
+.upload-zone.drag-over {
+  border-color: var(--purple-mid);
+  background: #f5f0ff;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+.upload-icon { font-size: 3rem; display: block; margin-bottom: 12px; }
+
+.upload-zone h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 4px;
+}
+
+.upload-zone p {
+  font-size: .875rem;
+  color: var(--gray-400);
+}
+
+.upload-zone .formats {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: .75rem;
+  color: var(--purple-mid);
+  background: #ede9fe;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* ── Image Preview ───────────────────────────────────────────────────── */
+#preview-section {
+  display: none;
+  margin-top: 20px;
+  text-align: center;
+}
+
+#preview-section.visible { display: block; }
+
+#image-preview {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+  object-fit: cover;
+}
+
+.file-info {
+  margin-top: 8px;
+  font-size: .8rem;
+  color: var(--gray-400);
+}
+
+.change-btn {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: .8rem;
+  color: var(--purple-mid);
+  cursor: pointer;
+  text-decoration: underline;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+/* ── Predict Button ──────────────────────────────────────────────────── */
+.btn-predict {
+  display: block;
+  width: 100%;
+  min-height: 52px;            /* touch-friendly */
+  margin-top: 20px;
+  padding: 14px 24px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--purple-mid), var(--blue-mid));
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: var(--transition);
+  box-shadow: var(--shadow-md);
+  letter-spacing: .3px;
+}
+
+.btn-predict:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(124,58,237,.4);
+}
+
+.btn-predict:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Loading Spinner ─────────────────────────────────────────────────── */
+#loading-section {
+  display: none;
+  text-align: center;
+  padding: 24px 0;
+}
+
+#loading-section.visible { display: block; }
+
+.spinner {
+  display: inline-block;
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--gray-200);
+  border-top-color: var(--purple-mid);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  color: var(--gray-600);
+  font-size: .95rem;
+}
+
+/* ── Result Card ─────────────────────────────────────────────────────── */
+#result-section {
+  display: none;
+}
+
+#result-section.visible { display: block; }
+
+.result-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.result-emoji { font-size: 2.8rem; }
+
+.result-title {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--gray-800);
+}
+
+.result-subtitle {
+  font-size: .875rem;
+  color: var(--gray-600);
+}
+
+/* Confidence bar */
+.confidence-block { margin: 16px 0; }
+
+.confidence-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: .875rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--gray-600);
+}
+
+.confidence-pct {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--purple-mid);
+}
+
+.bar-track {
+  height: 10px;
+  background: var(--gray-100);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--purple-mid), var(--blue-mid));
+  border-radius: 999px;
+  transition: width .6s ease;
+  width: 0%;
+}
+
+/* Severity badge */
+.severity-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+
+.severity-none   { background: var(--green-light);  color: var(--green);  }
+.severity-moderate { background: var(--orange-light); color: var(--orange); }
+.severity-high   { background: var(--red-light);    color: var(--red);    }
+.severity-unknown { background: var(--gray-100);    color: var(--gray-600); }
+
+/* Info rows */
+.info-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-top: 1px solid var(--gray-100);
+}
+
+.info-icon { font-size: 1.1rem; flex-shrink: 0; margin-top: 2px; }
+
+.info-text strong {
+  display: block;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  color: var(--gray-400);
+  margin-bottom: 2px;
+}
+
+.info-text span { font-size: .95rem; color: var(--gray-800); }
+
+/* All probabilities */
+.probs-toggle {
+  background: none;
+  border: none;
+  color: var(--purple-mid);
+  font-size: .85rem;
+  cursor: pointer;
+  padding: 6px 0;
+  display: block;
+  margin-top: 8px;
+  text-decoration: underline;
+}
+
+.probs-table { display: none; margin-top: 10px; }
+.probs-table.open { display: block; }
+
+.prob-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: .85rem;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.prob-row:last-child { border-bottom: none; }
+.prob-name { color: var(--gray-800); }
+.prob-val  { font-weight: 700; color: var(--purple-mid); min-width: 46px; text-align: right; }
+
+/* ── Error Card ──────────────────────────────────────────────────────── */
+#error-section {
+  display: none;
+}
+
+#error-section.visible { display: block; }
+
+.error-card {
+  background: var(--red-light);
+  border: 1.5px solid #fca5a5;
+  border-radius: var(--radius);
+  padding: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.error-icon { font-size: 1.5rem; flex-shrink: 0; }
+.error-title { font-weight: 700; color: var(--red); margin-bottom: 4px; }
+.error-msg { font-size: .9rem; color: #7f1d1d; }
+
+/* ── Supported Diseases Info ─────────────────────────────────────────── */
+.disease-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.disease-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: .85rem;
+  font-weight: 500;
+  color: var(--gray-800);
+}
+
+.disease-pill .pill-emoji { font-size: 1.2rem; }
+
+/* ── Tips section ────────────────────────────────────────────────────── */
+.tips-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tips-list li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: .9rem;
+  color: var(--gray-600);
+}
+
+.tips-list li .tip-icon { flex-shrink: 0; }
+
+/* ── Footer ──────────────────────────────────────────────────────────── */
+.app-footer {
+  text-align: center;
+  color: rgba(255,255,255,.65);
+  font-size: .8rem;
+  padding: 12px 0 0;
+}
+
+.app-footer a { color: rgba(255,255,255,.85); }
+
+/* ── Nav ─────────────────────────────────────────────────────────────── */
+.nav-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.nav-bar a {
+  color: rgba(255,255,255,.8);
+  text-decoration: none;
+  font-size: .875rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.12);
+  transition: var(--transition);
+}
+
+.nav-bar a:hover,
+.nav-bar a.active {
+  background: rgba(255,255,255,.25);
+  color: var(--white);
+}
+
+/* ── About page ──────────────────────────────────────────────────────── */
+.about-section { margin-bottom: 24px; }
+.about-section h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--purple-mid);
+  margin-bottom: 10px;
+}
+.about-section p,
+.about-section li { font-size: .95rem; color: var(--gray-600); margin-bottom: 6px; }
+.about-section ul { padding-left: 20px; }
+
+.team-card {
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  border: 1px solid var(--gray-200);
+  margin-bottom: 10px;
+}
+
+.team-card strong { display: block; font-size: .95rem; }
+.team-card span   { font-size: .85rem; color: var(--gray-400); }
+
+.accuracy-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .88rem;
+}
+
+.accuracy-table th,
+.accuracy-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--gray-200);
+}
+
+.accuracy-table th { font-weight: 700; color: var(--gray-600); background: var(--gray-50); }
+.accuracy-table td.acc { font-weight: 700; color: var(--purple-mid); }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .page-wrapper { padding: 16px 12px 40px; }
+  .card { padding: 20px 16px; }
+  .app-header h1 { font-size: 1.5rem; }
+  .upload-zone { padding: 28px 16px; }
+  .disease-grid { grid-template-columns: 1fr; }
+  .result-title { font-size: 1.2rem; }
+}

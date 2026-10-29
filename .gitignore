@@ -1,0 +1,33 @@
+﻿# Python virtual environment
+venv/
+.venv/
+env/
+ENV/
+
+# Byte-compiled / optimized files
+__pycache__/
+*.py[cod]
+*.pyd
+*.pyo
+
+# Testing & Caches
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Raw dataset images & temp folders (too large for git - GitHub 100MB limit)
+plantdoc_raw/
+plantdoc_raw.zip
+data/augmented_temp/
+data/plantvillage/
+data/plantdoc/
+
+# Temporary web uploads
+plant_disease_webapp/static/uploads/*
+!plant_disease_webapp/static/uploads/.gitkeep
+
+# IDE & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log
