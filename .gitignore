@@ -1,4 +1,4 @@
-﻿# Python virtual environment
+# Python virtual environment
 venv/
 .venv/
 env/
@@ -18,8 +18,6 @@ __pycache__/
 plantdoc_raw/
 plantdoc_raw.zip
 data/augmented_temp/
-data/plantvillage/
-data/plantdoc/
 
 # Temporary web uploads
 plant_disease_webapp/static/uploads/*
